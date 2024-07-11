@@ -1,0 +1,91 @@
+import * as React from "react"
+import { useState } from 'react';
+import axios from 'axios';
+import { CircularProgress } from "@chakra-ui/react";
+import './App.css';
+
+function App() {
+  const [map, setMap] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [sheetName, setSheetName] = useState<string>(''); // State to hold the sheet name
+
+  const handleFileUpload = async (file: File) => {
+    setIsLoading(true); // Set loading state to true
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('sheet_name', sheetName); // Append sheet_name to formData
+
+    try {
+      const response = await axios.post('http://127.0.0.1:5000/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        responseType: 'blob',
+      });
+
+      const mapBlob = new Blob([response.data], { type: 'text/html' });
+      const mapURL = URL.createObjectURL(mapBlob);
+      setMap(mapURL);
+    } catch (error) {
+      console.error('Error Uploading file: ', error);
+    } finally {
+      setIsLoading(false); // Set loading state back to false after request completes
+    }
+  };
+
+  const handleSheetNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputSheetName = e.target.value;
+    const titleCaseSheetName = toTitleCase(inputSheetName); // Convert to title case
+    setSheetName(titleCaseSheetName);
+  };
+
+  const handleSubmit = () => {
+    const fileInput = document.getElementById('fileInput') as HTMLInputElement;
+    if (fileInput.files && fileInput.files[0]) {
+      handleFileUpload(fileInput.files[0]);
+    } else {
+      console.error('No file selected');
+    }
+  };
+
+  // Function to convert string to title case
+  const toTitleCase = (str: string) => {
+    return str.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
+  };
+
+  return (
+    <>
+      <div className="App">
+        <h1>Ciana's Zip Code Map</h1>
+      </div>
+
+      <div className="upload">
+        <input id="fileInput" type="file" />
+        <input
+          type="text"
+          placeholder="Sheet Name"
+          value={sheetName}
+          onChange={handleSheetNameChange}
+        />
+        
+        {/* Submit Button */}
+        <button onClick={handleSubmit}>Upload and Show Map</button>
+      </div>
+
+      {/* Map Display */}
+      <div className="map">
+        
+        {isLoading ? (
+          <div className="loader">
+            <CircularProgress isIndeterminate color='green.300' />
+          </div>
+        ) : map && (
+          <iframe src={map} title="Map by Zip Code" width="100%" height="100%" />
+        )}
+      </div>
+    </>
+  )
+}
+
+export default App;
