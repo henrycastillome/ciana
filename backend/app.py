@@ -4,6 +4,10 @@ import pandas as pd
 from folium.plugins import MarkerCluster
 import folium
 from io import BytesIO
+import plotly.express as px
+import pandas as pd
+import pycountry
+import plotly.express as px
 
 app = Flask(__name__)
 CORS(app) 
@@ -58,6 +62,41 @@ def upload_file():
     map_html.seek(0)
 
     return send_file(map_html, mimetype='text/html')
+
+
+@app.route('/wwmap', methods=['POST'])
+def ww_map():
+    file=request.files['file']
+    sheet_name=request.form['sheet_name']
+
+    df=pd.read_excel(file, sheet_name=sheet_name)
+
+    countries = df['Country of Origin'].value_counts().reset_index()
+    countries.columns = ['Country', 'Total']
+
+    def get_country_code(country):
+        try:
+            return pycountry.countries.lookup(country).alpha_3
+        except:
+            return None
+        
+    countries['iso_alpha'] = countries['Country'].apply(get_country_code)
+
+    print(countries.head())
+
+    fig = px.choropleth(countries, locations="iso_alpha", color="Total", hover_name="Country", color_continuous_scale=px.colors.sequential.YlOrBr)
+
+    html_str = fig.to_html(full_html=False)
+
+    map_html = BytesIO()
+    map_html.write(html_str.encode('utf-8'))
+
+
+    map_html.seek(0)
+
+    return send_file(map_html, mimetype='text/html')
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)

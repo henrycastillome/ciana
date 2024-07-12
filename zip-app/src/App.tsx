@@ -6,8 +6,9 @@ import './App.css';
 
 function App() {
   const [map, setMap] = useState<string | null>(null);
+  const [worldMap, setWorldMap] = useState<string | null>(null); // State to hold the world map
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [sheetName, setSheetName] = useState<string>(''); // State to hold the sheet name
+  const [sheetName, setSheetName] = useState<string>(''); // State to hold the sheet name\
 
   const handleFileUpload = async (file: File) => {
     setIsLoading(true); // Set loading state to true
@@ -24,15 +25,28 @@ function App() {
         responseType: 'blob',
       });
 
+      const worldMapResponse = await axios.post('http://127.0.0.1:5000/wwmap', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        responseType: 'blob',
+      });
+      
+
       const mapBlob = new Blob([response.data], { type: 'text/html' });
       const mapURL = URL.createObjectURL(mapBlob);
+
+      const worldMapBlob = new Blob([worldMapResponse.data], { type: 'text/html' });
+      const worldMapURL = URL.createObjectURL(worldMapBlob);
       setMap(mapURL);
+      setWorldMap(worldMapURL);
     } catch (error) {
       console.error('Error Uploading file: ', error);
     } finally {
       setIsLoading(false); // Set loading state back to false after request completes
     }
   };
+
 
   const handleSheetNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputSheetName = e.target.value;
@@ -81,7 +95,19 @@ function App() {
             <CircularProgress isIndeterminate color='green.300' />
           </div>
         ) : map && (
-          <iframe src={map} title="Map by Zip Code" width="100%" height="100%" />
+          <iframe src={map} title="Map by Zip Code" />
+        )}
+      </div>
+
+      {/* World Map Display */}
+
+      <div className="map">
+        {isLoading ? (
+          <div className="loader">
+            <CircularProgress isIndeterminate color='green.300' />
+          </div>
+        ) : worldMap && (
+          <iframe src={worldMap} title="World Map"  />
         )}
       </div>
     </>
