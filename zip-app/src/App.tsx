@@ -1,7 +1,7 @@
 import * as React from "react"
 import { useState } from 'react';
 import axios from 'axios';
-import { CircularProgress } from "@chakra-ui/react";
+import { Button, CircularProgress, Input, InputGroup } from "@chakra-ui/react";
 import './App.css';
 
 function App() {
@@ -75,16 +75,19 @@ function App() {
       </div>
 
       <div className="upload">
-        <input id="fileInput" type="file" />
-        <input
+        <InputGroup>
+        <Input variant='unstyled' id="fileInput" type="file" />
+        <Input
           type="text"
           placeholder="Sheet Name"
           value={sheetName}
           onChange={handleSheetNameChange}
         />
+
+        </InputGroup>
         
         {/* Submit Button */}
-        <button onClick={handleSubmit}>Upload and Show Map</button>
+        <Button onClick={handleSubmit}>Upload and Show Map</Button>
       </div>
 
       {/* Map Display */}
